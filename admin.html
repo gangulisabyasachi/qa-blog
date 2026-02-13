@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Add Question</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Admin Panel</h1>
+    <nav>
+      <a href="index.html">Home</a> |
+      <a href="questions.html">Questions</a> |
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Add New Question</h2>
+    <p>Token: <input type="password" id="token" placeholder="Enter your secret token"></p>
+    
+    <form id="add-form">
+      <input type="text" id="title" placeholder="Question title" required>
+      <textarea id="answer" rows="12" placeholder="Full answer (you can use line breaks)" required></textarea>
+      <input type="text" id="keywords" placeholder="SEO keywords (comma separated, optional)">
+      <button type="submit">Add Question</button>
+    </form>
+    
+    <p><small>Note: This is a very basic admin. Edit/delete not implemented yet.</small></p>
+  </main>
+  <footer>© 2026 Simple Q&A Blog</footer>
+  <script src="script.js"></script>
+</body>
+</html>
