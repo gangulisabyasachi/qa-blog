@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header><h1>Edit Question</h1></header>
+  <main>
+    <form onsubmit="updateQuestion(event)">
+      <input id="title" required>
+      <textarea id="answer" rows="10" required></textarea>
+      <input id="keywords">
+      <button type="submit">Update</button>
+    </form>
+  </main>
+  <script>
+    const TOKEN = "vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxx";
+    const STORE_URL = "https://your-store-name.public.blob.vercel-storage.com";
+    const FULL_URL = `${STORE_URL}/questions.json?token=${TOKEN}`;
+
+    async function load() {
+      const id = new URLSearchParams(location.search).get("id");
+      if (!id) return alert("No ID");
+
+      const r = await fetch(FULL_URL);
+      const data = await r.json();
+      const q = data.questions.find(x => x.id === id);
+      if (!q) return alert("Not found");
+
+      document.getElementById("title").value = q.title;
+      document.getElementById("answer").value = q.answer;
+      document.getElementById("keywords").value = q.keywords || "";
+    }
+
+    async function updateQuestion(e) {
+      e.preventDefault();
+      const id = new URLSearchParams(location.search).get("id");
+      const title = document.getElementById("title").value.trim();
+      const answer = document.getElementById("answer").value.trim();
+      const keywords = document.getElementById("keywords").value.trim();
+
+      const r = await fetch(FULL_URL);
+      const data = await r.json();
+
+      data.questions = data.questions.map(q =>
+        q.id === id ? { ...q, title, answer, keywords } : q
+      );
+
+      await fetch(FULL_URL, {
+        method: "PUT",
+        body: JSON.stringify(data, null, 2),
+        headers: { "Content-Type": "application/json" }
+      });
+
+      alert("Updated!");
+      location.href = "index.html";
+    }
+
+    load();
+  </script>
+</body>
+</html>

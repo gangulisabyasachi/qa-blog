@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Question</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header><h1>Add Question</h1></header>
+  <main>
+    <form onsubmit="addQuestion(event)">
+      <input id="title" placeholder="Question" required>
+      <textarea id="answer" rows="10" placeholder="Answer" required></textarea>
+      <input id="keywords" placeholder="Keywords (optional)">
+      <button type="submit">Save</button>
+    </form>
+  </main>
+  <script>
+    const TOKEN = "vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxx"; // same
+    const STORE_URL = "https://your-store-name.public.blob.vercel-storage.com";
+    const FULL_URL = `${STORE_URL}/questions.json?token=${TOKEN}`;
+
+    async function addQuestion(e) {
+      e.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      const answer = document.getElementById("answer").value.trim();
+      const keywords = document.getElementById("keywords").value.trim();
+
+      if (!title || !answer) return alert("Fill title and answer");
+
+      let data;
+      try {
+        const r = await fetch(FULL_URL);
+        data = r.ok ? await r.json() : { questions: [] };
+      } catch {
+        data = { questions: [] };
+      }
+
+      data.questions.push({
+        id: Date.now().toString(),
+        title, answer, keywords,
+        date: new Date().toISOString()
+      });
+
+      await fetch(FULL_URL, {
+        method: "PUT",
+        body: JSON.stringify(data, null, 2),
+        headers: { "Content-Type": "application/json" }
+      });
+
+      alert("Added!");
+      location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
