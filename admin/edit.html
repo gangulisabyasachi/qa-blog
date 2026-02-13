@@ -1,65 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit</title>
-  <link rel="stylesheet" href="../style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Question</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    #status { margin: 15px 0; padding: 10px; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; }
+    .error   { background: #f8d7da; color: #721c24; }
+    #loading { display: none; color: #0066cc; }
+  </style>
 </head>
 <body>
-  <header><h1>Edit Question</h1></header>
+  <header>
+    <h1>Edit Question</h1>
+    <nav>
+      <a href="../index.html">Home</a> |
+      <a href="../questions.html">Questions</a> |
+      <a href="index.html">Admin Dashboard</a>
+    </nav>
+  </header>
+
   <main>
-    <form onsubmit="updateQuestion(event)">
-      <input id="title" required>
-      <textarea id="answer" rows="10" required></textarea>
-      <input id="keywords">
-      <button type="submit">Update</button>
+    <form id="editForm">
+      <input type="text" id="title" required />
+      <textarea id="answer" rows="12" required></textarea>
+      <input type="text" id="keywords" placeholder="SEO Keywords (optional)" />
+      <button type="submit">Update Question</button>
     </form>
+
+    <div id="loading">Saving...</div>
+    <div id="status"></div>
   </main>
+
+  <footer>© 2026 Simple Q&A Blog</footer>
+
   <script>
-    const TOKEN = "vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxx";
-    const STORE_URL = "https://your-store-name.public.blob.vercel-storage.com";
-    const FULL_URL = `${STORE_URL}/questions.json?token=${TOKEN}`;
+    const API_URL = '/api/save-questions';
+    const SECRET  = 'your-hardcoded-secret-2026';   // ← MUST match api/save-questions.js
 
-    async function load() {
-      const id = new URLSearchParams(location.search).get("id");
-      if (!id) return alert("No ID");
+    async function loadQuestion() {
+      const id = new URLSearchParams(location.search).get('id');
+      if (!id) {
+        showStatus('No question ID provided', 'error');
+        return;
+      }
 
-      const r = await fetch(FULL_URL);
-      const data = await r.json();
-      const q = data.questions.find(x => x.id === id);
-      if (!q) return alert("Not found");
+      try {
+        const res = await fetch(`${location.origin}/questions.json`);
+        if (!res.ok) throw new Error('Cannot load data');
+        const data = await res.json();
+        const q = data.questions.find(item => item.id === id);
 
-      document.getElementById("title").value = q.title;
-      document.getElementById("answer").value = q.answer;
-      document.getElementById("keywords").value = q.keywords || "";
+        if (!q) {
+          showStatus('Question not found', 'error');
+          return;
+        }
+
+        document.getElementById('title').value    = q.title;
+        document.getElementById('answer').value   = q.answer;
+        document.getElementById('keywords').value = q.keywords || '';
+
+      } catch (err) {
+        showStatus('Error loading question: ' + err.message, 'error');
+      }
     }
 
-    async function updateQuestion(e) {
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = new URLSearchParams(location.search).get("id");
-      const title = document.getElementById("title").value.trim();
-      const answer = document.getElementById("answer").value.trim();
-      const keywords = document.getElementById("keywords").value.trim();
 
-      const r = await fetch(FULL_URL);
-      const data = await r.json();
+      const id       = new URLSearchParams(location.search).get('id');
+      const title    = document.getElementById('title').value.trim();
+      const answer   = document.getElementById('answer').value.trim();
+      const keywords = document.getElementById('keywords').value.trim();
 
-      data.questions = data.questions.map(q =>
-        q.id === id ? { ...q, title, answer, keywords } : q
-      );
+      if (!title || !answer) {
+        showStatus('Title and answer are required', 'error');
+        return;
+      }
 
-      await fetch(FULL_URL, {
-        method: "PUT",
-        body: JSON.stringify(data, null, 2),
-        headers: { "Content-Type": "application/json" }
-      });
+      showStatus('', '');
+      document.getElementById('loading').style.display = 'block';
 
-      alert("Updated!");
-      location.href = "index.html";
+      try {
+        const currentRes = await fetch(`${location.origin}/questions.json`);
+        if (!currentRes.ok) throw new Error('Cannot load current data');
+        const current = await currentRes.json();
+
+        const updatedQuestions = current.questions.map(q =>
+          q.id === id ? { ...q, title, answer, keywords } : q
+        );
+
+        const saveRes = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': SECRET
+          },
+          body: JSON.stringify({ questions: updatedQuestions })
+        });
+
+        if (!saveRes.ok) {
+          const err = await saveRes.json();
+          throw new Error(err.error || 'Update failed');
+        }
+
+        showStatus('Question updated successfully!', 'success');
+        setTimeout(() => location.href = 'index.html', 1500);
+
+      } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+        console.error(err);
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    });
+
+    function showStatus(message, type = '') {
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.className = type;
     }
 
-    load();
+    // Load existing question when page opens
+    loadQuestion();
   </script>
 </body>
 </html>

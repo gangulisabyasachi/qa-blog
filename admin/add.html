@@ -1,56 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Question</title>
-  <link rel="stylesheet" href="../style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add New Question</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    #status { margin: 15px 0; padding: 10px; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; }
+    .error   { background: #f8d7da; color: #721c24; }
+    #loading { display: none; color: #0066cc; }
+  </style>
 </head>
 <body>
-  <header><h1>Add Question</h1></header>
+  <header>
+    <h1>Add New Question</h1>
+    <nav>
+      <a href="../index.html">Home</a> |
+      <a href="../questions.html">Questions</a> |
+      <a href="index.html">Admin Dashboard</a>
+    </nav>
+  </header>
+
   <main>
-    <form onsubmit="addQuestion(event)">
-      <input id="title" placeholder="Question" required>
-      <textarea id="answer" rows="10" placeholder="Answer" required></textarea>
-      <input id="keywords" placeholder="Keywords (optional)">
-      <button type="submit">Save</button>
+    <form id="addForm">
+      <input type="text" id="title" placeholder="Question Title" required autofocus />
+      <textarea id="answer" rows="12" placeholder="Full Answer (line breaks are preserved)" required></textarea>
+      <input type="text" id="keywords" placeholder="SEO Keywords (comma separated, optional)" />
+      <button type="submit">Add Question</button>
     </form>
+
+    <div id="loading">Saving...</div>
+    <div id="status"></div>
   </main>
+
+  <footer>© 2026 Simple Q&A Blog</footer>
+
   <script>
-    const TOKEN = "vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxx"; // same
-    const STORE_URL = "https://your-store-name.public.blob.vercel-storage.com";
-    const FULL_URL = `${STORE_URL}/questions.json?token=${TOKEN}`;
+    const API_URL = '/api/save-questions';
+    const SECRET  = 'your-hardcoded-secret-2026';   // ← MUST match the one in api/save-questions.js
 
-    async function addQuestion(e) {
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById("title").value.trim();
-      const answer = document.getElementById("answer").value.trim();
-      const keywords = document.getElementById("keywords").value.trim();
 
-      if (!title || !answer) return alert("Fill title and answer");
+      const title    = document.getElementById('title').value.trim();
+      const answer   = document.getElementById('answer').value.trim();
+      const keywords = document.getElementById('keywords').value.trim();
 
-      let data;
-      try {
-        const r = await fetch(FULL_URL);
-        data = r.ok ? await r.json() : { questions: [] };
-      } catch {
-        data = { questions: [] };
+      if (!title || !answer) {
+        showStatus('Title and answer are required', 'error');
+        return;
       }
 
-      data.questions.push({
-        id: Date.now().toString(),
-        title, answer, keywords,
-        date: new Date().toISOString()
-      });
+      showStatus('', '');
+      document.getElementById('loading').style.display = 'block';
 
-      await fetch(FULL_URL, {
-        method: "PUT",
-        body: JSON.stringify(data, null, 2),
-        headers: { "Content-Type": "application/json" }
-      });
+      try {
+        // Get current data
+        const currentRes = await fetch(`${location.origin}/questions.json`);
+        let current = { questions: [] };
+        if (currentRes.ok) {
+          current = await currentRes.json();
+        }
 
-      alert("Added!");
-      location.href = "index.html";
+        // Add new question
+        const newQuestion = {
+          id: Date.now().toString(),
+          title,
+          answer,
+          keywords,
+          date: new Date().toISOString()
+        };
+
+        const updated = {
+          questions: [...current.questions, newQuestion]
+        };
+
+        // Save via API
+        const saveRes = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': SECRET
+          },
+          body: JSON.stringify(updated)
+        });
+
+        if (!saveRes.ok) {
+          const err = await saveRes.json();
+          throw new Error(err.error || 'Save failed');
+        }
+
+        showStatus('Question added successfully!', 'success');
+        setTimeout(() => location.href = 'index.html', 1500);
+
+      } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+        console.error(err);
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    });
+
+    function showStatus(message, type = '') {
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.className = type;
     }
   </script>
 </body>
