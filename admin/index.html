@@ -3,25 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin</title>
+  <title>Admin - Login</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
   <header>
     <h1>Admin Panel</h1>
-    <nav><a href="../index.html">Home</a> | <a href="../questions.html">Questions</a></nav>
+    <nav>
+      <a href="../index.html">Home</a> |
+      <a href="../questions.html">Questions</a>
+    </nav>
   </header>
   <main>
-    <h2>Password</h2>
-    <input type="password" id="pass" placeholder="Enter password">
-    <button onclick="checkPass()">Enter Admin</button>
+    <h2>Admin Login</h2>
+    <p>Enter password to access admin features.</p>
+    
+    <input type="password" id="pass" placeholder="Password" autocomplete="off">
+    <button onclick="checkPass()">Login</button>
+    
+    <p id="message" style="color: red; min-height: 1.5em;"></p>
 
-    <div id="admin-content" style="display:none;">
-      <h2>Questions</h2>
+    <div id="admin-content" style="display: none;">
+      <h2>Manage Questions</h2>
       <ul id="list"></ul>
-      <a href="add.html">+ Add New Question</a>
+      <p><a href="add.html">+ Add New Question</a></p>
     </div>
   </main>
+  <footer>© 2026 Simple Q&A Blog</footer>
+
   <script src="script.js"></script>
 </body>
 </html>
